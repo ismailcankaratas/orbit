@@ -1,60 +1,113 @@
-# Orbit: local-first Claude Code observability
+# Orbit
 
-> **Project status:** Build specification and Claude Code agent handoff kit. This archive intentionally contains **no finished application**. The code is to be implemented end to end by Claude Code using this specification.
+Open-source, local-first observability for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Orbit reads the session history already on your computer and tells that story as one interactive scene: projects, sessions, models, tokens, subagents, and an estimated API-equivalent value.
 
-Orbit is an open-source, privacy-first **immersive, interactive data-storytelling app** (not a classic dashboard — see `docs/EXPERIENCE.md`) for understanding *local* Claude Code activity: projects, sessions, model/token usage, estimated API-equivalent cost, delegated subagent tasks, timelines, and a presentation-quality narrative reporting mode.
+Everything runs on `127.0.0.1`. There is no account, API key, or telemetry.
 
 ![Orbit Center chapter: orbital activity scene for the last 30 days](docs/screenshots/orbit-center.png)
 
-*Center chapter (01/12) — local activity, token usage, and estimated API-equivalent value.*
+*Center chapter (01/12). The interface defaults to Turkish; English is one click away.*
 
-## Product contract
+## Install
 
-- Entire application runs on the user's machine. The production dashboard is served on `127.0.0.1`, not hosted remotely.
-- Reads existing Claude Code session transcripts **read-only** from an explicitly approved local folder (default `~/.claude/projects`). Never modifies Claude settings, session files, credentials or user code.
-- No account creation, API key, paid backend, remote database, analytics SDK, or runtime data transmission required.
-- In Pro/Max mode, monetary numbers are **API-price-equivalent estimates**, **not** account charges, invoices, subscription spend, or remaining plan quota.
-- Historical coverage is limited to files on disk and normalized usage events already archived locally. Missing logs cannot be recovered by signing into a Claude account.
-- Distinguish observed events, inferred links, estimated prices and genuinely unknown data. Never simulate real activity without an unmistakable demo label.
-- The runtime is **observability only** in v1. It does not create, pause, resume, or reassign actual Claude Code agents. The Opus/Sonnet architecture in this kit describes the **development team**, not a promise of runtime control.
+Node.js **22.13 or newer** (24 recommended) and npm.
 
-## What will be built
+```bash
+git clone https://github.com/ismailcankaratas/orbit.git
+cd orbit
+npm install
+npm run dev
+```
 
-> Delivered as chapters of one interactive story (docs/EXPERIENCE.md), not as sidebar pages. The list below names the data capabilities.
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
-1. Overview: visually striking activity narrative, key metrics, usage graphs and trends.
-2. Projects: sortable project portfolio, aliases and per-project breakdowns.
-3. Sessions: history, search, model usage and duration estimates.
-4. Agents: parent-to-subagent relationships, task events, token and cost attribution, confidence/status indicators.
-5. Timeline: correlated activity across projects and sessions.
-6. Costs: uncached input, output, prompt caching, model pricing, unknown-rate coverage.
-7. Reports: local CSV/JSON export, presentation-style Story Mode.
-8. Settings: data directory, scanning, local archiving, privacy controls, model rate configuration, diagnostics.
+The first screen offers two paths:
 
-**Image concepts:** `design/references/`. These are illustrative, not accurate UI screenshots or source implementations.
+- **Explore the synthetic demo** — made-up sessions, so you can look around before pointing Orbit at anything personal.
+- **Scan my local history** — read-only scan of `~/.claude/projects`, or a folder you choose. Orbit does not modify Claude settings, transcripts, credentials, or your code.
 
-## For the developer using Claude Code
+To run the built app on a single port:
 
-1. Read `START_HERE_TR.md` for the local start commands.
-2. Launch an Opus main session in the repository root: `claude --model opus`.
-3. Paste the contents of `prompts/OPUS_KICKOFF.md` as the initial message.
-4. Opus reads `CLAUDE.md`, the documents in `docs/`, and delegates bounded implementation tasks to the eight Sonnet subagents in `.claude/agents/`.
-5. Every milestone requires working code, tests, visual verification and a short report in `reports/`.
-6. Publish to GitHub only after the checks in `docs/GITHUB_RELEASE.md` pass and after a human reviews the repository contents.
+```bash
+npm start
+```
 
-## Implementation constraints
+Then open [http://127.0.0.1:4317](http://127.0.0.1:4317).
 
-- Recommended: Node.js 24 LTS (minimum 24.15 for the proposed built-in SQLite interface), TypeScript, React + Vite, Fastify, Zod, node:sqlite, filesystem watcher with polling fallback, Vitest and Playwright.
-- npm workspaces (`apps/web`, `apps/server`, `packages/core`). The implementation agent may propose justified changes in an architecture decision record before coding.
-- Development can fetch/install dependencies; **production runtime** must not require third-party web services. Package versions and license notices must be checked.
-- The UI needs real empty states, loading/error/partial-coverage states and adaptive layouts. Never fake data or hard-code demo numbers into real mode.
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `ORBIT_PORT` | `4317` | API port. In dev, the page is on port `5173` and proxies to this port. |
+| `ORBIT_DATA_DIR` | see below | Where Orbit keeps its own database and settings. |
 
-## Sources and licenses
+Orbit's data directory (separate from Claude's files):
 
-- Official Claude Code documentation and known transcript caveats: `docs/RESEARCH_NOTES.md`.
-- This kit is MIT licensed (see `LICENSE`). Orbit branding is a working name; trademark/domain availability has not been checked.
-- Third-party Avenox screenshots were inspiration only and are **not distributed** here. The included Orbit mockups are AI-generated design concepts created for this project. Do not imitate third-party characters, scene layouts, artwork, exact copy, or marks.
+- macOS: `~/Library/Application Support/Orbit`
+- Linux: `$XDG_DATA_HOME/orbit` or `~/.local/share/orbit`
+- Windows: `%APPDATA%\Orbit`
 
-## What this archive is not
+## What you can do
 
-It is not a prebuilt application, a Claude plugin or an Anthropic product. It is a detailed, versionable specification and agent setup for producing the full application on the user's Mac and, eventually, on other computers.
+**0.1 alpha** ships the shell and the Center chapter. Chapters 02–12 appear in the catalog as planned.
+
+| Chapter | Status |
+| --- | --- |
+| 01 Center — period headline, orbital project map, model mix, token and value readouts | Available |
+| 02–12 Orbits, Sessions, Orchestration, Time, Models, Cache, Value, Rhythm, Findings, Scope, Export | Planned |
+
+Also in this release:
+
+- **Orbit Ask** answers a fixed set of questions from local data (tokens, sessions, top project, estimated value, and similar). `/` opens the chapter list. No model call and no network.
+- **Turkish and English.** Turkish is the default.
+- **Date range** in the top bar (7 / 30 / 90 days or a custom range).
+- **Demo and real data stay in separate databases**, with a visible badge for whichever is active.
+- **Local CSV and JSON export**, settings, and a delete action that removes Orbit's archive only.
+- **Keyboard:** `←` `→` move between ready chapters, `C` opens the catalog, `?` shows shortcuts, `Esc` closes overlays.
+
+Projects, sessions, agents, timeline, costs, and reports remain available as secondary views from a selection or from Orbit Ask (`/gezgin projeler`, and the same pattern for the other views).
+
+## Privacy
+
+- The server binds to `127.0.0.1` only.
+- Scanning starts after you consent. The default folder is `~/.claude/projects`.
+- Orbit stores normalized metadata: timestamps, opaque ids, token counts, model ids, and link confidence. Prompt text, tool output, and credentials are not archived.
+- Switching the archive off drops rows whose source file disappears. Switching it on keeps the numeric summary after the source file is gone.
+- Dependencies are fetched when you install. The running app does not send usage anywhere.
+
+Details: [`docs/SECURITY_PRIVACY.md`](docs/SECURITY_PRIVACY.md).
+
+## Estimated value
+
+Amounts are **Estimated API-equivalent value (USD)** from a versioned rate schedule bundled with the app (`anthropic-2026-10-15`). They describe what the same token counts would cost on Anthropic's public API prices.
+
+They are separate from a Claude Pro or Max invoice, subscription spend, and remaining quota. Unknown models stay unpriced and are counted in the coverage chip. The schedule is overridable locally and is never downloaded at runtime.
+
+## Development
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run test:e2e
+npm run verify    # typecheck, lint, unit tests, build, Playwright
+```
+
+Workspaces: `packages/core` (parser, attribution, pricing), `packages/test-fixtures`, `apps/server` (Fastify, `node:sqlite`), `apps/web` (React, Vite). Product and architecture notes live in [`docs/`](docs/).
+
+## License
+
+[MIT](LICENSE). Orbit is an independent project and is not affiliated with Anthropic.
+
+## Türkçe
+
+Orbit, bilgisayarınızdaki Claude Code oturum geçmişini okuyan, açık kaynak ve tamamen yerel bir gözlem uygulamasıdır. Hesap, API anahtarı ve telemetri yoktur. Arayüz varsayılan olarak Türkçedir.
+
+```bash
+git clone https://github.com/ismailcankaratas/orbit.git
+cd orbit
+npm install
+npm run dev
+```
+
+[http://127.0.0.1:5173](http://127.0.0.1:5173) adresini açın. İlk ekranda sentetik demoyu gezebilir veya `~/.claude/projects` klasörünü salt okunur taratabilirsiniz. Üretim derlemesi için `npm start`, ardından [http://127.0.0.1:4317](http://127.0.0.1:4317).
+
+Ekrandaki tutarlar **tahmini API eşdeğeri değerdir (USD)**. Claude Pro/Max faturası, abonelik harcaması veya kalan kota değildir. Sunucu yalnızca `127.0.0.1` üzerinde dinler. Ayrıntılı gizlilik modeli: [`docs/SECURITY_PRIVACY.md`](docs/SECURITY_PRIVACY.md). Lisans: [MIT](LICENSE).
