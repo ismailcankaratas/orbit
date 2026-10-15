@@ -1,0 +1,24 @@
+# ADR-001: Foundations, stack and phase-0 decisions
+
+Status: Accepted (2026-10-15, Opus orchestrator)
+
+## Context
+The repository contained only specifications. `.claude/agents/` (8 Sonnet agents) was missing from the extracted kit, the dev machine runs Node v22.19.0 (Apple M4 Pro, 24 GB), and the user instructed: default UI language **Turkish**, English via extensible i18n, no non-functional buttons, test unit/integration/E2E/a11y/perf/security, prepare an OSS release.
+
+## Decisions
+1. **Runtime: Node >= 22.13** (where `node:sqlite` is unflagged) with **Node 24 LTS recommended**. `.nvmrc` = 24; `engines.node` = `>=22.13`; CI matrix 22.x + 24.x. `node:sqlite` prints an ExperimentalWarning on 22.x; the server suppresses only that specific warning. If a blocking defect appears, switch to a reviewed driver via a new ADR.
+2. **Stack** as specified: npm workspaces `packages/core` (pure TS: schemas, parser, attribution, cost, aggregation helpers), `packages/test-fixtures` (deterministic synthetic generators), `apps/server` (Fastify 5, Zod, node:sqlite, fs.watch + polling fallback), `apps/web` (React 18 + Vite + TypeScript, TanStack Query, react-router, Recharts). Vitest for unit/integration, Playwright + @axe-core/playwright for E2E/a11y. TypeScript project references are avoided; each workspace typechecks independently. `packages/core` is consumed as TS source by server (via `tsx` in dev, `tsup`/esbuild bundle for prod) and web (Vite).
+3. **Language: Turkish (`tr`) default, English (`en`) complete.** Overrides the "English baseline" sentence in DESIGN_SYSTEM.md per explicit user instruction. All UI strings live in `apps/web/src/i18n/locales/{tr,en}.json`; a typed key check test fails if keys diverge. Adding a locale = add a JSON file + register it. Number/date formatting via `Intl` using the active locale; currency is always USD.
+4. **Rate schedule** bundled offline as `packages/core/src/cost/rates/anthropic-2026-10-15.json`, transcribed from the official pricing page fetched 2026-10-15 (snapshot: `docs/sources/anthropic-pricing-2026-10-15.md`). Matching is by exact model ID and by documented anchored aliases (e.g. dated suffixes `-YYYYMMDD` stripped). Not modeled (flagged as `not modeled` in the UI): fast mode, `inference_geo: us` 1.1x, Batch discount, Haiku 5.5 >100K-prompt tier (applied when a single request's input+cache tokens exceed 100,000 — this one IS determinable from usage counters and is modeled), legacy >200K long-context surcharges. `<synthetic>` and unknown IDs are unpriced.
+5. **Unsplit cache writes**: when `cache_creation_input_tokens` > sum of the nested 5m/1h split (or no split exists), the remainder is `unsplitCacheWrite`. Policy: priced at the **5-minute** write rate (Claude Code's historical default TTL) and the response is marked `priceQuality: "estimated_fallback"` with the count surfaced in coverage. Rationale: the 5m rate is the lower bound of the two write classes and is documented in UI.
+6. **Dedupe key** = `sha256(sourceNamespace + "\0" + message.id)` where namespace = `main:<sessionFileId>` or `agent:<agentFileId>`; fallback when `message.id` is missing: `requestId`; when both missing: `uuid` with `dedupeQuality: "uncertain"`. Final snapshot = the one with the greatest `output_tokens`, ties broken by latest timestamp then later line offset.
+7. **Archive representation**: immutable normalized per-request rows (token counters, model, timestamps, opaque IDs, confidence) are the archive — no prompt text. When archive is OFF, rows whose source file disappears are deleted on the next scan; when ON they are retained and flagged `sourcePresent=false`. Purge deletes only Orbit's DB file.
+8. **Security**: server binds 127.0.0.1 only (no override flag in v0.1); Host must be `127.0.0.1:<port>`/`localhost:<port>`; Origin, when present, must match; mutating routes require `x-orbit-csrf` header equal to a per-process random token delivered via a same-origin GET `/api/v1/session`. CSP `default-src 'self'`. No CORS headers.
+9. **Demo mode** uses a separate SQLite file generated from synthetic fixtures; real and demo DBs never mix. A persistent badge shows the active dataset.
+10. **Agents**: recreated in `.claude/agents/*.md` with `model: sonnet`. If the running Claude Code session does not load them dynamically, Opus delegates to the general-purpose agent with `model: sonnet` and the role file content pasted into the prompt (reported per wave).
+
+## Consequences / risks
+- R1 JSONL schema is undocumented and changes; parser is adapter-based and unknown shapes become diagnostics.
+- R2 Fixture expectation in `fixtures/README.md` says "uncached input 23" but main(10)+child(8)+unknown(5)=23 — consistent; cache write 5m 52 = 40+12. Verified by hand.
+- R3 `node:sqlite` experimental on 22.x.
+- R4 Prices change; schedule is versioned and user-overridable; never auto-downloaded.

@@ -1,0 +1,21 @@
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.env*
+!.env.example
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+.orbit-data/
+test-results/
+playwright-report/
+.DS_Store
+# Never commit real Claude data or private captures
+/.claude/projects/
+/.claude.json
+**/real-transcripts/
+private-screenshots/
+reports/private/

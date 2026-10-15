@@ -1,0 +1,16 @@
+{
+  "name": "orbit-claude-dashboard",
+  "version": "0.1.0-alpha.0",
+  "private": true,
+  "description": "Local-first Claude Code usage, projects and subagent observability. Private by design.",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "workspaces": ["packages/core", "packages/test-fixtures", "apps/server", "apps/web"],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "verify": "npm run typecheck && npm run lint && npm run test"
+  }
+}
