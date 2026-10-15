@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { CANARIES } from '@orbit/test-fixtures';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
-import { WIDE_API, WIDE_UI, getJson, hasKey, ready, t } from './support/index.js';
+import { WIDE_API, WIDE_UI, ask, getJson, hasKey, openScene, ready, t } from './support/index.js';
 
 // Timeline / Costs / Reports / Story Mode. Skipped (with the reason) until the Phase-4 UI + strings exist.
 const LANDED = hasKey('nav.costs') && hasKey('story.title') && hasKey('costs.definePrice') && hasKey('reports.downloadCsv');
@@ -13,21 +13,13 @@ async function clearOverrides(request: APIRequestContext): Promise<void> {
 }
 const costTotal = async (request: APIRequestContext): Promise<string> => (await getJson(request, `/api/v1/costs?${WIDE_API}`)).cost?.usdDecimal ?? (await getJson(request, `/api/v1/costs?${WIDE_API}`)).kpis?.cost?.usdDecimal;
 
-async function openNav(page: Page, key: string): Promise<void> {
-  const menu = page.getByRole('button', { name: t('nav.openMenu') });
-  if (await menu.isVisible()) {
-    await menu.click();
-    await page.getByRole('dialog').getByRole('link', { name: t(key) }).click();
-  } else await page.getByRole('navigation', { name: t('nav.main') }).getByRole('link', { name: t(key) }).click();
-}
-
-test('timeline: reachable from the nav, renders without an error state', async ({ page }) => {
+test('timeline: reachable through Orbit Ask (/gezgin zaman), renders in the explorer frame without an error state', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(`/?${WIDE_UI}`);
-  await ready(page);
-  await openNav(page, 'nav.timeline');
+  await openScene(page);
+  await ask(page, '/gezgin zaman');
   await expect(page).toHaveURL(/\/timeline/);
+  await expect(page.getByTestId('explorer-frame')).toBeVisible();
   await ready(page);
   await expect(page.locator('main [role="alert"]')).toHaveCount(0);
   expect(errors).toEqual([]);

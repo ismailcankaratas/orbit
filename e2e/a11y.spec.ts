@@ -1,6 +1,6 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { CORE_ROUTES, FRESH, PHASE4_ROUTES, WIDE_UI, discover, findPhase4Path, ready, t, tRe, type Discovered } from './support/index.js';
+import { CORE_ROUTES, FRESH, PHASE4_ROUTES, WIDE_UI, ask, askCard, discover, findPhase4Path, openScene, ready, t, tRe, type Discovered } from './support/index.js';
 
 async function scan(page: Page) {
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
@@ -29,6 +29,52 @@ test.describe('axe wcag2a + wcag2aa', () => {
     });
   }
 
+  test('catalog modal open', async ({ page }) => {
+    await openScene(page);
+    await page.keyboard.press('c');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.waitForTimeout(300);
+    expect(await scan(page)).toEqual([]);
+  });
+
+  test('help overlay open', async ({ page }) => {
+    await openScene(page);
+    await page.keyboard.press('?');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.waitForTimeout(300);
+    expect(await scan(page)).toEqual([]);
+  });
+
+  test('Orbit Ask: answer card open, and suggestion list open', async ({ page }) => {
+    await openScene(page);
+    await ask(page, 'tahmini değer ne kadar');
+    await expect(askCard(page)).toBeVisible();
+    await page.waitForTimeout(300);
+    expect(await scan(page), 'answer card').toEqual([]);
+    await page.keyboard.press('Escape');
+    await page.locator('[data-orbit-ask-input]').fill('/');
+    await expect(page.getByRole('listbox')).toBeVisible();
+    await page.waitForTimeout(300);
+    expect(await scan(page), 'suggestion list').toEqual([]);
+  });
+
+  test('settings drawer open', async ({ page }, info) => {
+    await openScene(page);
+    if (info.project.name === 'mobile') await page.getByRole('button', { name: t('shell.menu.open') }).click();
+    await page.getByRole('button', { name: t('shell.settings.open'), exact: true }).last().click(); // mobile: the menu popover trigger and its item share the name
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.waitForTimeout(400);
+    expect(await scan(page)).toEqual([]);
+  });
+
+  test('top-bar date popover open', async ({ page }) => {
+    await openScene(page);
+    await page.getByRole('button', { name: /Tarih aralığı/ }).click();
+    await expect(page.getByRole('group', { name: t('filter.presets') })).toBeVisible();
+    await page.waitForTimeout(300);
+    expect(await scan(page)).toEqual([]);
+  });
+
   test('agent drawer open', async ({ page }) => {
     await page.goto(`/agents?${WIDE_UI}`);
     await ready(page);
@@ -53,7 +99,7 @@ test.describe('axe wcag2a + wcag2aa', () => {
 
 test.describe('keyboard', () => {
   test('first Tab reaches the skip link and activating it moves focus into main', async ({ page }) => {
-    await page.goto(`/?${WIDE_UI}`);
+    await page.goto(`/bolum/merkez?${WIDE_UI}`);
     await ready(page);
     await page.keyboard.press('Tab');
     const skip = page.getByRole('link', { name: t('a11y.skip') });
@@ -74,7 +120,7 @@ test.describe('keyboard', () => {
     await expect(page.getByRole('link', { name: t('a11y.skip') })).toBeFocused();
   });
 
-  for (const path of [`/?${WIDE_UI}`, `/projects?${WIDE_UI}`, '/settings']) {
+  for (const path of [`/bolum/merkez?${WIDE_UI}`, `/projects?${WIDE_UI}`, '/settings']) {
     test(`every focused element has a visible focus indicator: ${path.split('?')[0]}`, async ({ page }) => {
       await page.goto(path);
       await ready(page);
@@ -92,9 +138,13 @@ test.describe('keyboard', () => {
           const ring = el.querySelector('.node-ring');
           const ringOk = ring ? parseFloat(getComputedStyle(ring).strokeWidth) >= 3 : false;
           const rect = el.getBoundingClientRect();
+          // Orbit Ask draws its ring on the wrapping form (:focus-within) and removes the input's own outline
+          const host = el.closest('.ask-form');
+          const hostCs = host ? getComputedStyle(host) : null;
+          const hostOk = !!hostCs && host!.matches(':focus-within') && ((hostCs.outlineStyle !== 'none' && parseFloat(hostCs.outlineWidth) > 0) || hostCs.boxShadow !== 'none');
           // Chromium date inputs: one tab stop is the native picker button, which draws its own native ring (host is not :focus-visible)
           if (el instanceof HTMLInputElement && el.type === 'date' && !el.matches(':focus-visible')) return { ok: true, visible: true, desc: '', label: '' };
-          return { ok: outline || shadow || ringOk, visible: rect.width > 0 && rect.height > 0, desc: `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}.${String(el.getAttribute('class') ?? '').split(' ')[0]}`, label: (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30) };
+          return { ok: outline || shadow || ringOk || hostOk, visible: rect.width > 0 && rect.height > 0, desc: `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}.${String(el.getAttribute('class') ?? '').split(' ')[0]}`, label: (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30) };
         });
         if (!info) continue;
         seen++;
@@ -117,9 +167,9 @@ test.describe('prefers-reduced-motion', () => {
     );
   }
 
-  test('overview: no running animation', async ({ page }) => {
+  test('merkez: no running animation', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto(`/?${WIDE_UI}`);
+    await page.goto(`/bolum/merkez?${WIDE_UI}`);
     await ready(page);
     await page.waitForTimeout(1000);
     expect(await running(page)).toEqual([]);

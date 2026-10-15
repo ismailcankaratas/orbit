@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { CANARIES } from '@orbit/test-fixtures';
 import { expect, test, type Page } from '@playwright/test';
-import { CORE_ROUTES, MAIN, PHASE4_ROUTES, WIDE_API, WIDE_UI, discover, failOnDialog, findPhase4Path, getJson, navTo, ready, t, tRe } from './support/index.js';
+import { ASK, CORE_ROUTES, MAIN, PHASE4_ROUTES, WIDE_API, WIDE_UI, ask, askCard, discover, failOnDialog, findPhase4Path, getJson, openScene, ready, t, tRe } from './support/index.js';
 
 const LOCAL_SCHEMES = /^(data|blob|about):/;
 
@@ -48,6 +48,20 @@ test('every request during a full walkthrough stays on 127.0.0.1:4450; DOM and A
     const html = await page.evaluate(() => document.documentElement.outerHTML);
     for (const l of leaks(html)) domLeaks.push(`${name}: ${l}`);
   });
+  // shell overlays + Orbit Ask (questions and commands) must not leave the origin or leak either
+  await openScene(page);
+  await page.keyboard.press('c');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  for (const l of leaks(await page.evaluate(() => document.documentElement.outerHTML))) domLeaks.push(`catalog: ${l}`);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('?');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  for (const q of ['kaç oturum', 'tahmini değer ne kadar', 'en çok kullanılan proje', 'hava nasıl']) {
+    await ask(page, q);
+    await expect(askCard(page)).toBeVisible();
+    for (const l of leaks(await page.evaluate(() => document.documentElement.outerHTML))) domLeaks.push(`ask(${q.length}): ${l}`);
+  }
   // open an agent drawer too
   await page.goto(`/agents?${WIDE_UI}`);
   await ready(page);
@@ -64,34 +78,61 @@ test('every request during a full walkthrough stays on 127.0.0.1:4450; DOM and A
   expect(pageErrors).toEqual([]);
 });
 
-test('offline after load: cached views keep rendering or show designed error states, never a crash', async ({ page, context }) => {
+const settled = (page: Page, label: string) =>
+  expect
+    // react-query retries before giving up, so poll: eventually real content or an explicit error state must replace the skeleton
+    .poll(async () => (await page.locator('main [role="alert"]').count()) + (await page.locator('main table, main .card, main .state, main .hero').count()), { timeout: 20_000, message: `${label}: neither content nor error state while offline` })
+    .toBeGreaterThan(0);
+
+test('offline after load: warmed explorer views, shell and Ask keep rendering, never a crash', async ({ page, context }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (e) => pageErrors.push(e.message));
   const d = await discover(page.request);
-  await page.goto(`/?${WIDE_UI}`);
+  await openScene(page);
+  // warm the data of the views we revisit offline (client-side navigation via Ask commands; a reload would need the network)
+  for (const cmd of ['/gezgin projeler', '/gezgin ajanlar', '/gezgin oturumlar', '/gezgin raporlar']) {
+    await ask(page, cmd);
+    await ready(page);
+  }
+  await page.getByTestId('explorer-frame').getByRole('button', { name: t('shell.explorer.back') }).click(); // SPA nav: keeps the query cache
   await ready(page);
-  // warm the lazily-loaded chunks of two more routes so offline navigation can reuse them
-  await page.goto(`/projects?${WIDE_UI}`);
-  await ready(page);
-  await page.goto(`/?${WIDE_UI}`);
-  await ready(page);
+  await expect(page.locator(ASK)).toBeVisible();
 
   await context.setOffline(true);
-  for (const key of ['nav.projects', 'nav.agents', 'nav.sessions', 'nav.settings', 'nav.overview']) {
-    await navTo(page, key);
+  for (const cmd of ['/gezgin projeler', '/gezgin ajanlar', '/gezgin oturumlar', '/gezgin raporlar']) {
+    await ask(page, cmd);
+    await expect(page.getByTestId('explorer-frame')).toBeVisible();
     await expect(page.locator('h1').first()).toBeVisible();
-    // react-query retries before giving up, so poll: eventually real content or an explicit error state must replace the skeleton
-    await expect
-      .poll(async () => (await page.locator('main [role="alert"]').count()) + (await page.locator('main table, main .card, main .state, main .hero').count()), { timeout: 20_000, message: `${key}: neither content nor error state while offline` })
-      .toBeGreaterThan(0);
-    expect((await page.locator('#root').innerText()).trim().length, `${key} rendered something while offline`).toBeGreaterThan(0);
+    await settled(page, cmd);
+    expect((await page.locator('#root').innerText()).trim().length, `${cmd} rendered something while offline`).toBeGreaterThan(0);
   }
+  await page.getByTestId('explorer-frame').getByRole('button', { name: t('shell.explorer.back') }).click();
+  await expect(page).toHaveURL(/\/bolum\/merkez/);
+  await expect(page.locator('h1').first()).toBeVisible();
+  await ask(page, '/yardım');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await ask(page, 'kaç oturum');
+  await expect(askCard(page)).toBeVisible(); // answered or a designed error card, never a blank crash
+  await expect(page.locator('[data-shell]')).toBeVisible();
 
   await context.setOffline(false);
   await page.goto(`/projects/${encodeURIComponent(d.topProject.id)}?${WIDE_UI}`);
   await ready(page);
   await expect(page.locator('h1').first()).toContainText(d.topProject.label.slice(0, 10));
   expect(pageErrors).toEqual([]);
+});
+
+// DEFECT PROBE (see reports/qa-delivery1.md, D-offline): react-query's default networkMode ('online') pauses a never-fetched
+// query once the browser goes offline, so the explorer view shows its skeleton forever with no message, even though the
+// 127.0.0.1 server is local. This test asserts the acceptable behaviour (content OR an explicit state) and fails today.
+test('offline after load: a view that was never loaded shows content or an explicit state, not an endless skeleton', async ({ page, context }) => {
+  await openScene(page);
+  await context.setOffline(true);
+  await ask(page, '/gezgin projeler');
+  await expect(page.getByTestId('explorer-frame')).toBeVisible();
+  await settled(page, '/gezgin projeler (cold)');
+  await context.setOffline(false);
 });
 
 test('XSS: html/script payload labels never execute or become elements', async ({ page, request }) => {
@@ -109,7 +150,7 @@ test('XSS: html/script payload labels never execute or become elements', async (
     `/sessions?${WIDE_UI}`,
     ...sessions.map((s) => `/sessions/${encodeURIComponent(s.id)}?${WIDE_UI}`),
     `/agents?${WIDE_UI}`,
-    `/?${WIDE_UI}`,
+    `/bolum/merkez?${WIDE_UI}`,
   ];
   for (const p of paths) {
     await page.goto(p);
@@ -164,31 +205,43 @@ async function download(page: Page, href: string): Promise<string> {
   return readFileSync(path, 'utf8');
 }
 
-test('exports (Overview CSV button + JSON) hold no canaries and neutralize formula cells', async ({ page }) => {
-  await page.goto(`/?${WIDE_UI}`);
+test('exports via Orbit Ask (/dışa-aktar csv|json) and /reports hold no canaries and neutralize formula cells', async ({ page }) => {
+  await openScene(page);
+  const askDownload = async (cmd: string): Promise<{ body: string; name: string }> => {
+    const [dl] = await Promise.all([page.waitForEvent('download'), ask(page, cmd)]);
+    return { body: readFileSync(await dl.path(), 'utf8'), name: dl.suggestedFilename() };
+  };
+  const csvAsk = await askDownload('/dışa-aktar csv');
+  expect(csvAsk.name).toMatch(/\.csv$/);
+  await expect(askCard(page)).toContainText('Pro/Max'); // export answer carries the money caveat
+  const jsonAsk = await askDownload('/dışa-aktar json');
+  expect(jsonAsk.name).toMatch(/\.json$/);
+  await page.goto(`/reports?${WIDE_UI}`);
   await ready(page);
-
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: t('action.downloadSummary') }).click()]);
-  const csvFromButton = readFileSync(await dl.path(), 'utf8');
-  expect(dl.suggestedFilename()).toMatch(/\.csv$/);
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: t('reports.downloadCsv') }).click()]);
+  const csvReports = readFileSync(await dl.path(), 'utf8');
 
   const csv = await download(page, `/api/v1/exports?${WIDE_API}&format=csv`);
   const json = await download(page, `/api/v1/exports?${WIDE_API}&format=json`);
-  for (const [name, body] of [['csv-button', csvFromButton], ['csv', csv], ['json', json]] as const) {
+  for (const [name, body] of [['csv-ask', csvAsk.body], ['json-ask', jsonAsk.body], ['csv-reports', csvReports], ['csv', csv], ['json', json]] as const) {
     expect(leaks(body), name).toEqual([]);
     expect(body.length, name).toBeGreaterThan(50);
   }
 
-  const rows = parseCsv(csv);
-  expect(rows.length).toBeGreaterThan(5);
-  const cells = rows.slice(1).flat();
-  // payload must actually be present (otherwise this check is vacuous) and be neutralized
-  const formulaCells = cells.filter((c) => /HYPERLINK|^'?[+@-]/.test(c) && !/^-?\d+(\.\d+)?$/.test(c));
-  const bad = cells.filter((c) => /^[=+@\t\r]/.test(c) || (/^-/.test(c) && !/^-?\d+(\.\d+)?$/.test(c)));
-  expect(bad, 'CSV cells a spreadsheet would evaluate').toEqual([]);
-  expect(formulaCells.length, 'formula-names scenario cells present in export').toBeGreaterThan(0);
+  for (const [name, text] of [['csv', csv], ['csv-ask', csvAsk.body]] as const) {
+    const rows = parseCsv(text);
+    expect(rows.length, name).toBeGreaterThan(5);
+    const cells = rows.slice(1).flat();
+    // payload must actually be present (otherwise this check is vacuous) and be neutralized
+    const formulaCells = cells.filter((c) => /HYPERLINK|^'?[+@-]/.test(c) && !/^-?\d+(\.\d+)?$/.test(c));
+    const bad = cells.filter((c) => /^[=+@\t\r]/.test(c) || (/^-/.test(c) && !/^-?\d+(\.\d+)?$/.test(c)));
+    expect(bad, `${name}: CSV cells a spreadsheet would evaluate`).toEqual([]);
+    expect(formulaCells.length, `${name}: formula-names scenario cells present in export`).toBeGreaterThan(0);
+  }
 
-  const parsed = JSON.parse(json) as { meta: Record<string, unknown>; rows: unknown[] };
-  expect(parsed.rows.length).toBeGreaterThan(0);
-  expect(JSON.stringify(parsed.meta)).toMatch(/estimate/i);
+  for (const [name, text] of [['json', json], ['json-ask', jsonAsk.body]] as const) {
+    const parsed = JSON.parse(text) as { meta: Record<string, unknown>; rows: unknown[] };
+    expect(parsed.rows.length, name).toBeGreaterThan(0);
+    expect(JSON.stringify(parsed.meta), name).toMatch(/estimate/i);
+  }
 });
