@@ -1,2 +1,3 @@
-// Placeholder owned by the Orbit Ask agent — replace with the real component.
-export const OrbitAsk = () => null;
+export { OrbitAsk } from './OrbitAsk';
+export { parseAsk } from './parse';
+export { executeAsk } from './execute';

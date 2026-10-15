@@ -7,6 +7,7 @@ import { LiveProvider } from './api/live';
 import { ApiRequestError } from './api/client';
 import { I18nProvider, useT } from './i18n';
 import './styles/global.css';
+import './ds/tokens.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {

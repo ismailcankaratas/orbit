@@ -4,13 +4,18 @@ import { Icon } from './icons';
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-function useTrap(onClose: () => void) {
+/** Open traps, innermost last: only the top-most overlay reacts to Esc/Tab (nested dialogs must not close their parents). */
+const TRAPS: HTMLElement[] = [];
+
+export function useTrap(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     const node = ref.current;
+    if (node) TRAPS.push(node);
     (node?.querySelector<HTMLElement>('[data-autofocus]') ?? node?.querySelector<HTMLElement>(FOCUSABLE))?.focus();
     const onKey = (e: KeyboardEvent) => {
+      if (node && TRAPS[TRAPS.length - 1] !== node) return;
       if (e.key === 'Escape') {
         e.stopPropagation();
         onClose();
@@ -33,6 +38,8 @@ function useTrap(onClose: () => void) {
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
+      const at = node ? TRAPS.lastIndexOf(node) : -1;
+      if (at >= 0) TRAPS.splice(at, 1);
       document.body.style.overflow = prevOverflow;
       prev?.focus?.();
     };
@@ -40,13 +47,13 @@ function useTrap(onClose: () => void) {
   return ref;
 }
 
-export function Drawer({ title, onClose, children, side = 'right' }: { title: string; onClose: () => void; children: ReactNode; side?: 'right' | 'left' }) {
+export function Drawer({ title, onClose, children, side = 'right', wide = false }: { title: string; onClose: () => void; children: ReactNode; side?: 'right' | 'left'; wide?: boolean }) {
   const t = useT();
   const id = useId();
   const ref = useTrap(onClose);
   return (
     <div className={`overlay ${side}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="drawer" role="dialog" aria-modal="true" aria-labelledby={id} ref={ref}>
+      <div className={`drawer${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={id} ref={ref}>
         <div className="card-head">
           <h2 id={id}>{title}</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label={t('action.close')}>

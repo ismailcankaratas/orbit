@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { StatusDTO } from '@orbit/core';
-import { PRESETS, useFilters, useIsDataRoute } from '../api/filters';
+import { PRESETS, useFilters } from '../api/filters';
 import { usePatchSettings, useOverview } from '../api/hooks';
 import { LOCALES, LOCALE_IDS, isLocale, useFormat, useI18n, useT } from '../i18n';
-import { DatasetBadge } from './badges';
-import { Icon } from './icons';
 
 export function LangSwitch({ id = 'lang' }: { id?: string }) {
   const { locale, setLocale } = useI18n();
@@ -77,47 +74,5 @@ export function EntityFilters({ projects, models }: { projects?: { id: string; l
         </label>
       ) : null}
     </div>
-  );
-}
-
-export function ScanHealth({ status }: { status: StatusDTO }) {
-  const t = useT();
-  const fmt = useFormat();
-  const s = status.scan;
-  const scanning = s.state === 'scanning';
-  return (
-    <div className="row small" style={{ gap: 8 }}>
-      {scanning ? (
-        <span className="badge warn" role="status"><Icon name="refresh" size={13} />{t('scan.scanning', { done: s.filesDone, total: s.filesTotal })}</span>
-      ) : s.state === 'error' ? (
-        <span className="badge danger"><Icon name="alert" size={13} />{t(`error.${s.lastError ?? 'INTERNAL'}.title`)}</span>
-      ) : (
-        <span className="muted">{status.lastScanAt ? t('scan.last', { time: fmt.dateTime(status.lastScanAt) }) : t('scan.never')}</span>
-      )}
-      <span className={`badge ${status.watcher === 'watching' ? 'good' : status.watcher === 'error' ? 'danger' : 'unknown'}`} title={t(`watcher.${status.watcher}.help`)}>
-        <Icon name={status.watcher === 'watching' ? 'eye' : status.watcher === 'error' ? 'alert' : 'flat'} size={13} />
-        {t(`watcher.${status.watcher}`)}
-      </span>
-    </div>
-  );
-}
-
-export function Topbar({ status, onMenu }: { status: StatusDTO | undefined; onMenu: () => void }) {
-  const t = useT();
-  const showDates = useIsDataRoute();
-  return (
-    <>
-      <div className="topbar">
-        <button type="button" className="icon-btn mobile-only" onClick={onMenu} aria-label={t('nav.openMenu')}><Icon name="menu" /></button>
-        {status ? <DatasetBadge mode={status.mode} /> : null}
-        {showDates ? <DateRange /> : null}
-        <span className="spacer" />
-        {status ? <ScanHealth status={status} /> : null}
-        <span className="desktop-only"><LangSwitch id="lang-top" /></span>
-      </div>
-      {status?.mode === 'demo' ? (
-        <div className="demo-banner" role="note"><Icon name="alert" size={18} /><span>{t('dataset.demoBanner')}</span></div>
-      ) : null}
-    </>
   );
 }

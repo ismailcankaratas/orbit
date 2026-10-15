@@ -1,0 +1,21 @@
+/* Orbit design-system additions (ADR-003). Existing variables live in styles/global.css. */
+:root {
+  --top-h: 56px;
+  --rail-h: 44px;
+  --ask-h: 68px;
+  /* Fallback until the shell measures the real footer. Shell overrides --foot-h / --scene-h on .orbit-shell. */
+  --foot-h: calc(var(--rail-h) + var(--ask-h));
+  --scene-h: calc(100dvh - var(--top-h) - var(--foot-h));
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --glass: rgba(16, 18, 20, 0.82);
+  --glass-strong: rgba(22, 23, 26, 0.94);
+  --gold-glow: rgba(216, 168, 77, 0.18);
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-fast: 180ms;
+  --dur: 240ms;
+  --z-bg: 0;
+  --z-scene: 1;
+  --z-foot: 30;
+  --z-top: 40;
+  --z-pop: 50;
+}

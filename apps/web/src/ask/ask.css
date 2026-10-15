@@ -1,0 +1,77 @@
+/* Orbit Ask — scoped styles (prefix ask-). Existing design tokens only. */
+.ask { position: relative; width: 100%; }
+.ask-form {
+  display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 4px 0 14px;
+  background: var(--bg-panel); border: 1px solid var(--line-strong); border-radius: var(--radius);
+}
+.ask-form:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; border-color: var(--accent); }
+.ask-input {
+  flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0; background: transparent; border: 0; outline: none;
+  color: var(--text-primary); font-family: var(--font-ui); font-size: 16px; line-height: 1.3;
+}
+.ask-input::placeholder { color: var(--text-secondary); opacity: 1; }
+.ask-kbd {
+  flex: none; min-width: 24px; padding: 1px 7px; text-align: center; font: 600 13px/1.5 var(--font-ui);
+  color: var(--text-secondary); border: 1px solid var(--line-strong); border-radius: 6px;
+}
+.ask-submit {
+  flex: none; min-width: 44px; min-height: 44px; padding: 0 14px; cursor: pointer;
+  font: 600 14px var(--font-ui); color: var(--accent); background: transparent; border: 0; border-radius: 8px;
+}
+.ask-submit:hover:not(:disabled) { background: var(--bg-raised); }
+.ask-submit:focus-visible, .ask-close:focus-visible, .ask-chip:focus-visible, .ask-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ask-submit:disabled { color: var(--text-secondary); cursor: not-allowed; }
+
+.ask-live { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 60; pointer-events: none; }
+.ask-live > * { pointer-events: auto; }
+.ask-card, .ask-pop {
+  background: var(--bg-panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .55); animation: ask-in .2s ease-out;
+}
+.ask-card { position: relative; padding: 14px 48px 14px 16px; max-height: min(52vh, 360px); overflow-y: auto; }
+.ask-card.error { border-left: 3px solid var(--warning); }
+.ask-card[aria-busy='true'] { color: var(--text-secondary); }
+.ask-figure { font-family: var(--font-serif); font-size: clamp(30px, 6vw, 44px); line-height: 1.1; color: var(--accent); overflow-wrap: anywhere; }
+.ask-text { margin: 6px 0 0; color: var(--text-primary); }
+.ask-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 10px; font-size: 14px; }
+.ask-caveat { margin: 10px 0 0; padding: 6px 10px; font-size: 14px; color: var(--warning); background: var(--bg-raised); border-radius: 8px; }
+.ask-link { color: var(--accent); }
+.ask-close {
+  position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; cursor: pointer;
+  font-size: 22px; line-height: 1; color: var(--text-secondary); background: transparent; border: 0; border-radius: 8px;
+}
+.ask-close:hover { color: var(--text-primary); background: var(--bg-raised); }
+.ask-examples-title { margin: 12px 0 6px; font-size: 14px; color: var(--text-secondary); }
+.ask-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask-chip {
+  min-height: 44px; padding: 8px 14px; cursor: pointer; text-align: left;
+  font: 14px/1.3 var(--font-ui); color: var(--text-primary); background: var(--bg-raised); border: 1px solid var(--line-strong); border-radius: 999px;
+}
+.ask-chip:hover { border-color: var(--accent); }
+.ask-chips-wrap { padding: 4px 0; }
+
+.ask-pop { max-height: min(52vh, 380px); overflow-y: auto; padding: 6px; margin: 0; list-style: none; position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 60; }
+.ask-opt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; min-height: 44px; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.ask-opt[aria-selected='true'] { background: var(--bg-raised); box-shadow: inset 3px 0 0 var(--accent); }
+.ask-opt:hover { background: var(--bg-raised); }
+.ask-opt[aria-disabled='true'] { color: var(--text-secondary); cursor: default; }
+.ask-opt-label { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; color: var(--accent); }
+.ask-opt[aria-disabled='true'] .ask-opt-label { color: var(--text-secondary); }
+.ask-opt-desc { font-size: 14px; color: var(--text-secondary); }
+.ask-opt-reason { margin-left: auto; font-size: 13px; color: var(--warning); }
+.ask-empty { padding: 12px; color: var(--text-secondary); font-size: 14px; }
+.ask-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 767px) {
+  .ask-kbd { display: none; }
+  .ask-card { max-height: 46vh; }
+  .ask-pop { max-height: 46vh; }
+}
+@keyframes ask-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ask-card, .ask-pop { animation: none; } }
+.ask .ask-input:focus, .ask .ask-input:focus-visible { outline: none; box-shadow: none; border: 0; }
+@media (min-width: 768px) {
+  .ask-card, .ask-pop { max-width: 760px; margin-inline: auto; }
+  .ask-live { display: flex; flex-direction: column; align-items: center; }
+  .ask-live > .ask-card, .ask-live > .ask-chips-wrap { width: 100%; max-width: 760px; }
+}
