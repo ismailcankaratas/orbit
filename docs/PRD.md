@@ -1,5 +1,7 @@
 # Product requirements document (PRD)
 
+> **BINDING PRODUCT DECISION (ADR-003, 2026-10-15):** Orbit is an **Immersive Interactive Data Storytelling Platform** — four persistent layers (Top Bar, one Interactive Scene, Orbit Ask, Chapter Rail) and 12 chapters, specified in `docs/EXPERIENCE.md`. Any sidebar, page-per-feature dashboard or long vertical card-stack description in this document is **superseded** by `docs/EXPERIENCE.md`. Data, privacy, cost and security requirements here remain binding.
+
 ## Problem and audience
 Claude Code developers using Pro/Max subscriptions can see current session activity but lack a unified, trustworthy, visually understandable record across locally available projects, main sessions and subagent invocations. Existing CLI token meters often separate costs from workload and hide uncertain attribution.
 
@@ -8,7 +10,7 @@ Primary audiences: a solo Claude Code developer with many local repos, an AI-ass
 ## Goals
 G1. Show **all recoverable** local history, not falsely claim all account history.
 G2. Attribute unique token usage and pricing estimates to models, projects, sessions, parent agents and child agents when the evidence supports it.
-G3. Enable fast visual understanding within 5 seconds of opening the dashboard.
+G3. Enable fast visual understanding within 5 seconds of opening Orbit's first scene (Merkez).
 G4. Offer near-real-time update of appended logs without disrupting Claude Code.
 G5. Produce presentation-quality visual narratives without exposing private prompts.
 G6. Enable safe local archive of normalized events so cleanup does not erase all historical usage metrics.
@@ -25,6 +27,7 @@ G7. Be usable without an API key or network connectivity after installation.
 ## Priority-ranked features
 
 ### P0: required before any public release
+- Immersive shell per docs/EXPERIENCE.md: Top Bar, single Interactive Scene, always-visible Orbit Ask (slash commands + deterministic local questions), Chapter Rail + chapter catalog with keyboard navigation. The feature items below describe *data capabilities*; they are delivered as chapters, not as sidebar pages.
 - First launch: source selection, privacy policy summary, coverage caveats, scan progress, permission error handling, optional safe demo mode.
 - Overview metrics for the selected date range: unique counted requests, processed token categories, estimated API-equivalent USD for priced requests only, projects, sessions, observed subagents, data coverage.
 - Projects: friendly names, searchable/sortable list, project detail with trends/sessions/agents.

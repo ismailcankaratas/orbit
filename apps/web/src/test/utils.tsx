@@ -21,7 +21,7 @@ export function renderWith(ui: ReactElement, opts: { route?: string; locale?: Lo
   return render(
     <I18nProvider initialLocale={opts.locale ?? 'tr'} initialTimezone={opts.tz ?? 'Europe/Istanbul'}>
       <QueryClientProvider client={qc}>
-        <MemoryRouter initialEntries={[opts.route ?? "/"]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>{ui}</MemoryRouter>
+        <MemoryRouter initialEntries={[opts.route ?? "/"]}>{ui}</MemoryRouter>
       </QueryClientProvider>
     </I18nProvider>,
   );

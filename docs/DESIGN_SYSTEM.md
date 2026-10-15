@@ -1,5 +1,7 @@
 # Orbit visual language and UI design system
 
+> **BINDING PRODUCT DECISION (ADR-003, 2026-10-15):** Orbit is an **Immersive Interactive Data Storytelling Platform** — four persistent layers (Top Bar, one Interactive Scene, Orbit Ask, Chapter Rail) and 12 chapters, specified in `docs/EXPERIENCE.md`. Any sidebar, page-per-feature dashboard or long vertical card-stack description in this document is **superseded** by `docs/EXPERIENCE.md`. Data, privacy, cost and security requirements here remain binding.
+
 ## Creative direction
 **Signature:** quiet, intellectual, cinematic data storytelling. Orbit is NOT a conventional admin template and NOT a clone of Avenox. We borrow general principles (readable data + narrative + interactivity), never exact compositions, character designs, visual art, copy, or navigation.
 
@@ -38,9 +40,9 @@ These values are guidelines. Achieve accessible contrast for small text and stat
 - Numbers: tabular numerals, clear separators, localized display, never confuse 1,000.00 and 1.000,00.
 - Body default >=14px, main reading >=15-16px; don't squeeze tiny tooltips to match the concept art.
 
-## Layout grid
-- Desktop 1440px design baseline. Collapsible 224-256px sidebar, 28-36px content gutters, high-density but generous group separation. 12-column grid; card heights consistent within row.
-- Tablet 768-1023px: collapsible sidebar, two columns, prevent chart legend overflow.
+## Layout grid — SUPERSEDED by docs/EXPERIENCE.md §1/§5 (no sidebar; one scene per viewport on desktop)
+- ~~Collapsible 224-256px sidebar~~ (superseded). Desktop 1440px design baseline, 28-36px content gutters, high-density but generous group separation. 12-column grid; card heights consistent within row.
+- Tablet 768-1023px: ~~collapsible sidebar~~ scene adapts to two columns, prevent chart legend overflow.
 - Mobile <=767px: single-column flows, bottom/sheet navigation or compact menu, no wide table overflow without clear scrolling. Key metrics visible without sideways scrolling.
 - No hover-only essential interactions; keyboard navigation, visible focus and tooltips.
 
@@ -74,6 +76,6 @@ These values are guidelines. Achieve accessible contrast for small text and stat
 
 ## Visual verification acceptance
 - Screenshot at 1440x900 and 390x844 from real app, compare with direction not copied pixels.
-- At least 3 pages (Overview, Agents, Project Detail) must feel visually related.
+- Every chapter scene must feel like part of one continuous story (shared shell, motifs and type).
 - Very-long project names, long model IDs, no data, unknown price, low contrast theme, reduced motion, colorblind status and cramped date filters all remain usable.
 - Every click/toggle seen in UI must be functional, accurately disabled with explanation, or removed.

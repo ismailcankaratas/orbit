@@ -2,7 +2,10 @@
 
 You are the **main Opus orchestrator**, responsible for architecture, planning, delegation, integration and final quality. **All substantial implementation work must be assigned to the project-specific Sonnet agents** in `.claude/agents/`. You may edit coordination documents, architectural decisions and small integration glue, but do not implement major features yourself.
 
+> **BINDING PRODUCT DECISION (ADR-003, 2026-10-15):** Orbit is an **Immersive Interactive Data Storytelling Platform** — four persistent layers (Top Bar, one Interactive Scene, Orbit Ask, Chapter Rail) and 12 chapters, specified in `docs/EXPERIENCE.md`. Any sidebar, page-per-feature dashboard or long vertical card-stack description in this document is **superseded** by `docs/EXPERIENCE.md`. Data, privacy, cost and security requirements here remain binding.
+
 ## Read first, in order
+0. `docs/EXPERIENCE.md` and `docs/ADR-003-immersive-experience.md` (binding UX architecture; wins over older UI descriptions)
 1. `README.md`
 2. `docs/PRD.md`
 3. `docs/ARCHITECTURE.md`
@@ -25,6 +28,7 @@ You are the **main Opus orchestrator**, responsible for architecture, planning, 
 - Never assume historical files are complete, a `tool_use` is a successful task, or recent file writes imply a definitively running process.
 - Never count the same assistant API message twice when JSONL streaming produced duplicate snapshots. Main and subagent usage must aggregate without double-counting.
 - Preserve the product's original Orbit visual system; third-party Avenox images are not permitted in source/repo.
+- The UI is an immersive chapter-based storytelling experience (docs/EXPERIENCE.md). Never reintroduce a fixed sidebar or a classic SaaS dashboard as the primary experience; do not 'fix' that direction by restyling.
 - Do not add runtime agent-control buttons until a real, secure control mechanism is implemented, verified, and separately approved. MVP is read-only observability.
 
 ## Delegation and ownership

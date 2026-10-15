@@ -1,5 +1,7 @@
 # Technical architecture
 
+> **BINDING PRODUCT DECISION (ADR-003, 2026-10-15):** Orbit is an **Immersive Interactive Data Storytelling Platform** — four persistent layers (Top Bar, one Interactive Scene, Orbit Ask, Chapter Rail) and 12 chapters, specified in `docs/EXPERIENCE.md`. Any sidebar, page-per-feature dashboard or long vertical card-stack description in this document is **superseded** by `docs/EXPERIENCE.md`. Data, privacy, cost and security requirements here remain binding.
+
 ## Chosen baseline
 - **Node 24 LTS**, >=24.15 for `node:sqlite` support. Pin `.nvmrc`, `engines` and CI matrix. If the built-in SQLite release-candidate status or performance causes issues, document an ADR and choose an explicitly reviewed driver.
 - **npm workspaces**: `apps/web` React + Vite + TypeScript, `apps/server` Fastify + TypeScript, `packages/core` schemas/parser/aggregation/metering, `packages/test-fixtures` synthetic fixture helpers. Start with one repository, no containers or cloud infra required.
@@ -24,7 +26,7 @@ metadata-only local SQLite       confidence/coverage records
 aggregator -> pricing engine -> Fastify localhost API + SSE
                                      |
                                      v
-React Dashboard / Agents / Sessions / Story Mode / Export
+React immersive shell (Top Bar · Scene · Orbit Ask · Chapter Rail) / chapters / export
 ```
 
 Never store or transmit raw prompts, tool commands, file contents or model output in the normalized database. The ingestion pipeline may parse a restricted allowlist of fields; sensitive transcript content should remain transient in memory only where unavoidable. A private-content display is an explicit future opt-in feature, not default.
@@ -38,7 +40,7 @@ Never store or transmit raw prompts, tool commands, file contents or model outpu
 - `aggregates`: timeseries, distribution, filters, coverage; SQL grouped queries and stable pagination.
 - `watcher`: emits file change events; small incremental cursor; coalesces, handles partial JSONL lines.
 - `api`: validated, safe, bounded endpoints returning serializable DTOs, never filesystem paths by default.
-- `ui`: feature pages, independent data access layer and Story Mode.
+- `ui`: immersive shell, chapter scenes, Orbit Ask (deterministic local intent parser), independent data access layer; transitional data-explorer views (docs/EXPERIENCE.md).
 
 ## Repo structure target
 ```

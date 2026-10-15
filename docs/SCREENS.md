@@ -1,9 +1,11 @@
 # Screen catalog, navigation and interactions
 
+> **BINDING PRODUCT DECISION (ADR-003, 2026-10-15):** Orbit is an **Immersive Interactive Data Storytelling Platform** — four persistent layers (Top Bar, one Interactive Scene, Orbit Ask, Chapter Rail) and 12 chapters, specified in `docs/EXPERIENCE.md`. Any sidebar, page-per-feature dashboard or long vertical card-stack description in this document is **superseded** by `docs/EXPERIENCE.md`. Data, privacy, cost and security requirements here remain binding.
+
 > All screens are **observability-first**. The Orbit designs include several promotional buttons that are NOT supported by read-only v1. Replace them with real navigation/filter actions.
 
-## Global app shell
-Fixed desktop sidebar with Orbit symbol, search, Overview, Projects, Agents, Sessions, Timeline, Costs, Reports, Settings. Topbar with range picker, dataset `Real` or unmistakable `Demo`, latest scan timestamp, scan health, optional keyboard shortcut palette. Global filters (date, project, model) persist within an active view. Search input searches safe project aliases, sessions and agent roles, not raw secret/prompt content.
+## Global app shell — SUPERSEDED by docs/EXPERIENCE.md §1 (no sidebar)
+~~Fixed desktop sidebar~~ (historical text kept for reference): Fixed desktop sidebar with Orbit symbol, search, Overview, Projects, Agents, Sessions, Timeline, Costs, Reports, Settings. Topbar with range picker, dataset `Real` or unmistakable `Demo`, latest scan timestamp, scan health, optional keyboard shortcut palette. Global filters (date, project, model) persist within an active view. Search input searches safe project aliases, sessions and agent roles, not raw secret/prompt content.
 
 ### 00. Welcome / privacy consent
 - Animated geometrical Orbit hero, very short product description.
@@ -12,7 +14,7 @@ Fixed desktop sidebar with Orbit symbol, search, Overview, Projects, Agents, Ses
 - Optional local archive consent, editable later. Onboarding scan progress and empty/error guidance.
 - Acceptance: no app data scan before the consent action; no API key or registration.
 
-### 01. Overview (reference: orbit-overview-concept.png)
+### 01. Overview → now Chapter 01 "Merkez" (docs/EXPERIENCE.md §3); items below describe its data, not its layout
 - Hero `One workspace. Every local session.` with elegant orbital node art. Dynamic statement: measured metric, e.g. `3 projects were active this week` with cited filters. Avoid claims when data absent.
 - KPIs: processed token categories, unique requests, estimated API equivalent USD, sessions, observed subagents, price coverage. Each card expandable/links to source detail.
 - Daily token area/bar timeline with category toggle and hover breakdown; model distribution donut; project rank list; agent activity lanes; dated insight banner.

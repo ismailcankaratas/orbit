@@ -2,7 +2,7 @@
 
 > **Project status:** Build specification and Claude Code agent handoff kit. This archive intentionally contains **no finished application**. The code is to be implemented end to end by Claude Code using this specification.
 
-Orbit is an open-source, privacy-first desktop-web dashboard for understanding *local* Claude Code activity: projects, sessions, model/token usage, estimated API-equivalent cost, delegated subagent tasks, timelines, and a presentation-quality narrative reporting mode.
+Orbit is an open-source, privacy-first **immersive, interactive data-storytelling app** (not a classic dashboard — see `docs/EXPERIENCE.md`) for understanding *local* Claude Code activity: projects, sessions, model/token usage, estimated API-equivalent cost, delegated subagent tasks, timelines, and a presentation-quality narrative reporting mode.
 
 ## Product contract
 
@@ -15,6 +15,8 @@ Orbit is an open-source, privacy-first desktop-web dashboard for understanding *
 - The runtime is **observability only** in v1. It does not create, pause, resume, or reassign actual Claude Code agents. The Opus/Sonnet architecture in this kit describes the **development team**, not a promise of runtime control.
 
 ## What will be built
+
+> Delivered as chapters of one interactive story (docs/EXPERIENCE.md), not as sidebar pages. The list below names the data capabilities.
 
 1. Overview: visually striking activity narrative, key metrics, usage graphs and trends.
 2. Projects: sortable project portfolio, aliases and per-project breakdowns.

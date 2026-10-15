@@ -27,7 +27,7 @@ createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <I18nProvider>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <BrowserRouter>
           <Live>
             <App />
           </Live>
