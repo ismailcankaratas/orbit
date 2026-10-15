@@ -4,6 +4,10 @@
 
 Orbit is an open-source, privacy-first **immersive, interactive data-storytelling app** (not a classic dashboard — see `docs/EXPERIENCE.md`) for understanding *local* Claude Code activity: projects, sessions, model/token usage, estimated API-equivalent cost, delegated subagent tasks, timelines, and a presentation-quality narrative reporting mode.
 
+![Orbit Center chapter: orbital activity scene for the last 30 days](docs/screenshots/orbit-center.png)
+
+*Center chapter (01/12) — local activity, token usage, and estimated API-equivalent value.*
+
 ## Product contract
 
 - Entire application runs on the user's machine. The production dashboard is served on `127.0.0.1`, not hosted remotely.
