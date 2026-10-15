@@ -67,7 +67,7 @@ export function TopBar({ status, onSettings }: { status: StatusDTO | undefined; 
         <OrbitLogo size={26} />
         <span className="brand-name">orbit</span>
       </FLink>
-      {status ? <DatasetBadge mode={status.mode} /> : null}
+      {status ? <DatasetBadge mode={status.mode} compact={compact} /> : null}
       {status?.mode === 'demo' && !compact ? <span className="sh-demo-note small muted" data-testid="demo-note">{t('shell.demo.notice')}</span> : null}
       <span className="spacer" />
       {compact ? (
@@ -81,6 +81,7 @@ export function TopBar({ status, onSettings }: { status: StatusDTO | undefined; 
           >
             {({ close }) => (
               <div className="stack">
+                {status?.mode === 'demo' ? <p className="small muted" style={{ margin: 0 }}>{t('shell.demo.notice')}</p> : null}
                 {status ? <ScanChip status={status} /> : null}
                 <LangToggle />
                 <button type="button" className="btn sm" onClick={() => { close(); onSettings(); }}><Icon name="gear" size={16} />{t('shell.settings.open')}</button>

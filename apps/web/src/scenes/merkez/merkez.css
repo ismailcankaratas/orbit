@@ -1,5 +1,5 @@
 /* Scene 01 "Merkez" — scoped with the mz- prefix. Tokens come from the global design system. */
-.mz-root { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 16px 24px; color: var(--text-primary); max-width: 100%; }
+.mz-root { width: 100%; min-width: 0; position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px 16px 24px; color: var(--text-primary); max-width: 100%; }
 .mz-root > .mz-left, .mz-root > .mz-right { display: contents; }
 .mz-col { display: contents; }
 .mz-head { grid-column: 1 / -1; order: 1; position: relative; padding-top: 14px; }
@@ -134,9 +134,24 @@
   .mz-left { justify-content: flex-start; }
   .mz-left .mz-detail { margin-top: auto; }
   .mz-head, .mz-stage, .mz-ro, .mz-cmp, .mz-detail, .mz-invite { order: 0; grid-column: auto; }
-  .mz-head { padding-top: 12px; }
-  .mz-h1 { font-size: clamp(34px, 3vw, 44px); }
-  .mz-stage { grid-column: 2; grid-row: 1; }
+  .mz-head { padding-top: 8px; }
+  .mz-h1 { font-size: clamp(28px, calc(var(--scene-h, 740px) * 0.05), 42px); margin: 6px 0 6px; }
+  .mz-sub-line { font-size: 14px; }
+  .mz-ro { padding: 2px 0 2px 14px; }
+  .mz-ro-val, .mz-ro-btn { font-size: clamp(22px, calc(var(--scene-h, 740px) * 0.034), 28px); }
+  .mz-ro-value .mz-ro-val { font-size: clamp(22px, calc(var(--scene-h, 740px) * 0.036), 28px); }
+  .mz-ro:not(.mz-ro-value) .mz-ro-note { display: none; }
+  .mz-col { gap: 2px; }
+  .mz-detail { padding: 8px 14px 10px; }
+  .mz-d-head { margin: 2px 0 6px; }
+  .mz-d-name { font-size: 21px; }
+  .mz-stats { gap: 6px 10px; }
+  .mz-stat dd { font-size: 13.5px; }
+  .mz-stat dt { font-size: 10.5px; letter-spacing: .05em; }
+  .mz-d-value { margin: 6px 0 6px; }
+  .mz-panel { padding: 7px 12px; }
+  .mz-panel-h { margin-bottom: 4px; }
+  .mz-stage { grid-column: 2; grid-row: 1; overflow: hidden; }
   .mz-orbit { width: auto; height: calc(var(--scene-h, 760px) - 52px); max-width: 100%; max-height: 100%; }
   .mz-cmp { grid-template-columns: 1fr; gap: 6px; }
   .mz-ro-value, .mz-ro-tokens.is-open, .mz-ro-tokens:focus-within { grid-column: auto; }

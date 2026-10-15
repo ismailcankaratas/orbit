@@ -230,7 +230,7 @@ function Detail({ d, picked, live }: { d: OverviewDTO; picked: Picked; live: boo
             <Stat label={t('scene.merkez.detail.sessions')}>{fmt.num(p.sessions)}</Stat>
             <Stat label={t('scene.merkez.detail.requests')}>{fmt.num(p.requests)}</Stat>
             <Stat label={t('scene.merkez.detail.subagents')}>{fmt.num(p.agents)}</Stat>
-            <Stat label={t('scene.merkez.detail.last')}>{p.lastActiveAt ? fmt.dateTime(p.lastActiveAt) : t('scene.merkez.detail.lastNone')}</Stat>
+            <Stat label={t('scene.merkez.detail.last')}>{p.lastActiveAt ? `${fmt.date(p.lastActiveAt)} ${fmt.time(p.lastActiveAt)}` : t('scene.merkez.detail.lastNone')}</Stat>
           </dl>
           <p className="mz-d-value">
             <span className="mz-d-value-l">{moneyLabel}</span>

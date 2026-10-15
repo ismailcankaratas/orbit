@@ -104,5 +104,7 @@
   "shell.scene.region": "Scene",
   "shell.footer.region": "Chapter rail and Orbit Ask",
   "shell.error.title": "This scene could not be loaded",
-  "shell.error.body": "Something unexpected went wrong in this scene. The rest of Orbit keeps working."
+  "shell.error.body": "Something unexpected went wrong in this scene. The rest of Orbit keeps working.",
+  "shell.dataset.demoShort": "Demo",
+  "shell.dataset.realShort": "Real"
 }

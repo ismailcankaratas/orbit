@@ -166,12 +166,12 @@ function Body({ s }: { s: SettingsDTO }) {
   );
 }
 
-export function Settings() {
+export function Settings({ embedded = false }: { embedded?: boolean } = {}) {
   const t = useT();
   const q = useSettings();
   return (
     <>
-      <PageHeader eyebrow={t('nav.settings')} title={t('settings.title')} lead={t('settings.lead')} />
+      {embedded ? <p className="muted">{t('settings.lead')}</p> : <PageHeader eyebrow={t('nav.settings')} title={t('settings.title')} lead={t('settings.lead')} />}
       <Query q={q} skeleton={300}>{(s) => <Body s={s} />}</Query>
     </>
   );

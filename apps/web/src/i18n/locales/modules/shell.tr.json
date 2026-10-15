@@ -104,5 +104,7 @@
   "shell.scene.region": "Sahne",
   "shell.footer.region": "Bölüm çubuğu ve Orbit'e sor",
   "shell.error.title": "Bu sahne yüklenemedi",
-  "shell.error.body": "Sahnede beklenmeyen bir hata oluştu. Diğer bölümler ve Orbit'e sor çalışmaya devam eder."
+  "shell.error.body": "Sahnede beklenmeyen bir hata oluştu. Diğer bölümler ve Orbit'e sor çalışmaya devam eder.",
+  "shell.dataset.demoShort": "Demo",
+  "shell.dataset.realShort": "Gerçek"
 }

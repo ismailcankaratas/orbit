@@ -66,20 +66,20 @@ export function CoverageChip({ coverage, cost }: { coverage: Pick<Coverage, 'unp
   );
 }
 
-export function DatasetBadge({ mode }: { mode: DatasetMode }) {
+export function DatasetBadge({ mode, compact = false }: { mode: DatasetMode; compact?: boolean }) {
   const t = useT();
   if (mode === 'demo')
     return (
-      <span className="badge dataset-demo" role="status">
+      <span className="badge dataset-demo" role="status" {...(compact ? { 'aria-label': t('dataset.demo'), title: t('dataset.demo') } : {})}>
         <Icon name="alert" size={14} />
-        {t('dataset.demo')}
+        {compact ? t('shell.dataset.demoShort') : t('dataset.demo')}
       </span>
     );
   if (mode === 'real')
     return (
-      <span className="badge dataset-real" role="status">
+      <span className="badge dataset-real" role="status" {...(compact ? { 'aria-label': t('dataset.real'), title: t('dataset.real') } : {})}>
         <Icon name="check" size={14} />
-        {t('dataset.real')}
+        {compact ? t('shell.dataset.realShort') : t('dataset.real')}
       </span>
     );
   return <span className="badge unknown">{t('dataset.none')}</span>;

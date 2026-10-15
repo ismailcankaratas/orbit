@@ -117,7 +117,7 @@ export function ExperienceShell({ status, children }: { status: StatusDTO | unde
         {help ? <HelpOverlay onClose={closeHelp} /> : null}
         {settings ? (
           <Drawer title={t('shell.settings.title')} wide onClose={closeSettings}>
-            <Settings />
+            <Settings embedded />
           </Drawer>
         ) : null}
       </div>
