@@ -54,7 +54,8 @@ describe('scenarios', () => {
       'streaming-duplicates', 'multiple-children', 'nested-depth', 'orphan-child', 'unknown-model', 'zero-cache',
       'cache-split', 'malformed-line', 'partial-last-line', 'missing-timestamp', 'conflicting-timestamps',
       'same-named-projects', 'html-payloads', 'formula-names', 'same-role-children', 'shared-message-id',
-      'dst-days', 'legacy-task-tool', 'crlf', 'prompt-injection',
+      'dst-days', 'legacy-task-tool', 'crlf', 'prompt-injection', 'inferred-link', 'nested-orphan-grandchild',
+      'split-exceeds-aggregate', 'invalid-utf8', 'huge-line',
     ];
     for (const r of required) expect(Object.keys(scenarios)).toContain(r);
   });
@@ -79,6 +80,11 @@ describe('scenarios', () => {
     expect(scenarios['orphan-child']!.expected).toMatchObject({ exactLinks: 0, unlinkedAgents: 1 });
     expect(scenarios['nested-depth']!.expected.exactLinks).toBe(2);
     expect(scenarios['baseline']!.expected).toMatchObject({ uniqueRequests: 3, uncachedInput: 23, output: 43, cacheRead: 80, cacheWrite5m: 52 });
+    expect(scenarios['inferred-link']!.expected).toMatchObject({ uniqueRequests: 2, exactLinks: 0, inferredLinks: 1, unlinkedAgents: 0 });
+    expect(scenarios['nested-orphan-grandchild']!.expected).toMatchObject({ uniqueRequests: 3, exactLinks: 1, unlinkedAgents: 1 });
+    expect(scenarios['split-exceeds-aggregate']!.expected).toMatchObject({ cacheWrite5m: 100, cacheWrite1h: 200, unsplitCacheWrite: 0 });
+    expect(scenarios['invalid-utf8']!.expected.uniqueRequests).toBe(2);
+    expect(scenarios['huge-line']!.expected).toMatchObject({ uniqueRequests: 2, uncachedInput: 17, output: 8 });
     expect(scenarios['dst-days']!.daily!['America/New_York']!['2026-03-08']).toBe(2);
   });
 
@@ -92,6 +98,20 @@ describe('scenarios', () => {
     const root2 = mk();
     await writeScenario('crlf', root2);
     expect(readFileSync(listFiles(root2).find((p) => p.endsWith('crlf-session-001.jsonl'))!, 'utf8')).toContain('\r\n');
+  });
+
+  it('invalid-utf8 file really contains invalid UTF-8 and huge-line exceeds 4 MiB', async () => {
+    const root = mk();
+    await writeScenario('invalid-utf8', root);
+    const f = listFiles(root)[0]!;
+    const bytes = readFileSync(f);
+    expect(bytes.includes(Buffer.from([0xff, 0xfe, 0xc3, 0x28]))).toBe(true);
+    expect(() => new TextDecoder('utf-8', { fatal: true }).decode(bytes)).toThrow();
+    expect(bytes.toString('latin1')).not.toContain('@@INVALID_UTF8@@');
+    const root2 = mk();
+    await writeScenario('huge-line', root2);
+    const longest = Math.max(...readFileSync(listFiles(root2)[0]!, 'latin1').split('\n').map((l) => l.length));
+    expect(longest).toBeGreaterThan(4 * 1024 * 1024);
   });
 
   it('writeAll combines every scenario and combinedExpected matches the sum', async () => {

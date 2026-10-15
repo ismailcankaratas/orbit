@@ -24,7 +24,25 @@ export class FileBuf {
   render(): string {
     return this.lines.map((l) => l + this.eol).join('') + this.tail;
   }
+  /** Bytes as written to disk: INVALID_UTF8_SENTINEL is replaced by bytes that are not valid UTF-8. */
+  renderBytes(): Buffer {
+    const text = Buffer.from(this.render(), 'utf8');
+    if (!text.includes(INVALID_UTF8_SENTINEL)) return text;
+    const parts: Buffer[] = [];
+    let from = 0;
+    for (;;) {
+      const i = text.indexOf(INVALID_UTF8_SENTINEL, from);
+      if (i === -1) break;
+      parts.push(text.subarray(from, i), Buffer.from([0xff, 0xfe, 0xc3, 0x28]));
+      from = i + INVALID_UTF8_SENTINEL.length;
+    }
+    parts.push(text.subarray(from));
+    return Buffer.concat(parts);
+  }
 }
+
+/** ASCII marker used inside generated text; replaced with invalid UTF-8 bytes when written. */
+export const INVALID_UTF8_SENTINEL = '@@INVALID_UTF8@@';
 
 export type ToolSpec = { id?: string; name: 'Agent' | 'Task' | 'Bash'; role?: string };
 
@@ -49,7 +67,7 @@ export type ReqSpec = {
   count?: boolean;
 };
 
-type ChildRecord = { toolUseId: string | null };
+type ChildRecord = { toolUseId: string | null; inferred: boolean };
 
 export class Tree {
   readonly files = new Map<string, FileBuf>();
@@ -110,7 +128,7 @@ export class Tree {
     cwd: string,
     sessionId: string,
     agentId: string,
-    o: { role: string; toolUseId: string | null; depth?: number },
+    o: { role: string; toolUseId: string | null; depth?: number; inferred?: boolean },
   ): FileBuf {
     const dir = join(encodeProject(cwd), sessionId, 'subagents');
     const f = new FileBuf(join(dir, `agent-${agentId}.jsonl`), 'agent', sessionId, undefined, agentId);
@@ -120,7 +138,7 @@ export class Tree {
     if (o.toolUseId !== null) m.toolUseId = o.toolUseId;
     meta.lines.push(JSON.stringify(m));
     this.files.set(meta.rel, meta);
-    this.children.push({ toolUseId: o.toolUseId });
+    this.children.push({ toolUseId: o.toolUseId, inferred: o.inferred === true });
     return f;
   }
 
@@ -203,9 +221,11 @@ export class Tree {
 
   totals(): ExpectedTotals {
     let exact = 0;
+    let inferred = 0;
     let unlinked = 0;
     for (const c of this.children) {
       if (c.toolUseId !== null && this.toolIds.has(c.toolUseId)) exact++;
+      else if (c.toolUseId === null && c.inferred) inferred++;
       else unlinked++;
     }
     return {
@@ -217,7 +237,7 @@ export class Tree {
       cacheWrite1h: this.acc.c1,
       unsplitCacheWrite: this.acc.unsplit,
       exactLinks: exact,
-      inferredLinks: 0,
+      inferredLinks: inferred,
       unlinkedAgents: unlinked,
       unknownModelRequests: this.acc.unk,
       malformedLines: this.malformed,
@@ -230,7 +250,7 @@ export class Tree {
     for (const f of this.files.values()) {
       const p = join(root, f.rel);
       mkdirSync(dirname(p), { recursive: true });
-      writeFileSync(p, f.render());
+      writeFileSync(p, f.renderBytes());
     }
   }
 }

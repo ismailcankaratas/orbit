@@ -1,4 +1,5 @@
-import { open } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { open, type FileHandle } from 'node:fs/promises';
 import { MAX_LINE_BYTES } from './parseLine.js';
 
 export interface JsonlLine {
@@ -28,7 +29,36 @@ export interface JsonlIncrement {
   fileIdentity: FileIdentity;
 }
 
+/** Thrown when the opened file is not the regular file that discovery saw (replaced, swapped for a symlink/FIFO, ...). */
+export class SourceChangedError extends Error {
+  readonly code = 'SOURCE_CHANGED';
+  constructor() {
+    super('Source file changed between discovery and read');
+    this.name = 'SourceChangedError';
+  }
+}
+
+/**
+ * Open read-only without following a final symlink (O_NOFOLLOW where the platform has it), then verify with fstat
+ * that the descriptor is a regular file and, when given, that dev/ino equal the values discovery recorded.
+ * Closes the handle and throws {@link SourceChangedError} on mismatch.
+ */
+export async function openRegularFile(path: string, expect?: { dev: number; ino: number }): Promise<FileHandle> {
+  // O_NONBLOCK: opening a swapped-in FIFO must not block a threadpool worker; regular files are unaffected.
+  const fh = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
+  try {
+    const st = await fh.stat();
+    if (!st.isFile() || (expect !== undefined && (st.dev !== expect.dev || st.ino !== expect.ino))) throw new SourceChangedError();
+    return fh;
+  } catch (e) {
+    await fh.close().catch(() => undefined);
+    throw e;
+  }
+}
+
 export interface ReadJsonlOptions {
+  /** Require the opened descriptor to have this dev/ino (post-open fstat); otherwise SourceChangedError. */
+  expectIdentity?: { dev: number; ino: number };
   fromOffset: number;
   /** Max bytes to read in this increment (bounds work per call). */
   maxBytes?: number;
@@ -49,7 +79,7 @@ function decode(buf: Buffer): { text: string; invalid: boolean } {
 export async function readJsonlIncrement(path: string, opts: ReadJsonlOptions): Promise<JsonlIncrement> {
   const maxLine = opts.maxLineBytes ?? MAX_LINE_BYTES;
   const from = Math.max(0, Math.floor(opts.fromOffset));
-  const fh = await open(path, 'r'); // read-only
+  const fh = await openRegularFile(path, opts.expectIdentity); // read-only, no symlink follow, fstat-verified
   try {
     const st = await fh.stat();
     const fileIdentity: FileIdentity = { dev: st.dev, ino: st.ino, size: st.size, mtimeMs: st.mtimeMs };

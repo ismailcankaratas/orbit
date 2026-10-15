@@ -77,3 +77,9 @@ Tables or equivalent: `source_files`, `projects`, `sessions`, `agent_invocations
 
 ## Error cases to design
 `SOURCE_NOT_FOUND`, `PERMISSION_DENIED`, `SCAN_IN_PROGRESS`, `PARTIAL_TRANSCRIPT`, `RATE_NOT_FOUND`, `UNSUPPORTED_SOURCE_SCHEMA`, `INVALID_FILTER`, `EXPORT_TOO_LARGE`, `APP_ARCHIVE_NOT_INITIALIZED`, `NO_COVERAGE`, `CROSS_ORIGIN_DENIED`.
+
+## Implementation notes (v0.1, see ADR-002)
+- `PATCH /api/v1/settings` with a forbidden `sourceRoot` (`/`, home or its ancestors, `~/.ssh`, `~/.gnupg`, `~/Library/Keychains`, `/etc`, `/System`, or anything containing/inside Orbit's data dir) → 400 `SOURCE_NOT_ALLOWED`; the path is never echoed.
+- `GET /api/v1/events` accepts at most 16 concurrent clients; beyond that 503 `RATE_LIMITED` (retryable).
+- Oversized headers (431) and malformed requests (400) use the standard error shape with security headers.
+- Exports above 100,000 aggregated rows → 413 `EXPORT_TOO_LARGE`.

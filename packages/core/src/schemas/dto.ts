@@ -64,6 +64,7 @@ export interface ApiError {
       | 'CROSS_ORIGIN_DENIED'
       | 'CSRF_REQUIRED'
       | 'CONSENT_REQUIRED'
+      | 'SOURCE_NOT_ALLOWED'
       | 'NOT_FOUND'
       | 'RATE_LIMITED'
       | 'INTERNAL';

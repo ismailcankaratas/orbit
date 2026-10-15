@@ -1,4 +1,5 @@
-import { open } from 'node:fs/promises';
+import type { FileHandle } from 'node:fs/promises';
+import { openRegularFile } from './readJsonl.js';
 import type { AgentMeta } from '../schemas/types.js';
 import { safeId, sanitizeRoleSlug } from './sanitize.js';
 
@@ -28,9 +29,9 @@ export function parseAgentMeta(text: string): AgentMeta {
 
 /** Read a meta file read-only, refusing files over 64 KiB. Returns null if missing/unreadable/oversize. */
 export async function readAgentMeta(path: string): Promise<AgentMeta | null> {
-  let fh;
+  let fh: FileHandle | undefined;
   try {
-    fh = await open(path, 'r');
+    fh = await openRegularFile(path);
     const st = await fh.stat();
     if (!st.isFile() || st.size > MAX_META_BYTES) return null;
     const buf = Buffer.alloc(st.size);

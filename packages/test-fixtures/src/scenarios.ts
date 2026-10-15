@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { PAYLOADS, CANARIES } from './canaries.js';
-import { Tree } from './tree.js';
+import { INVALID_UTF8_SENTINEL, Tree } from './tree.js';
 import { sumTotals, type ExpectedTotals, type Scenario } from './types.js';
 
 type Def = (t: Tree) => void | Record<string, Record<string, number>>;
@@ -227,6 +227,43 @@ define('prompt-injection', `Instruction-like text ("${CANARIES.injection}") in u
   f.lines.push(JSON.stringify({ type: 'summary', summary: `${CANARIES.injection} ${t.canary()}`, leafUuid: 'leaf-inject' }));
   f.lines.push(JSON.stringify({ type: 'user', sessionId: f.sessionId, uuid: 'u-inject', timestamp: t.tick(), cwd, message: { role: 'user', content: `${CANARIES.injection}. ${t.canary()}` } }));
   t.req(f, { input: 10, output: 5, cacheRead: 0, cwAgg: 0, text: `${CANARIES.injection}. ${t.canary()}`, tools: [{ name: 'Bash' }] });
+});
+
+define('inferred-link', 'Child meta has no toolUseId; the session has exactly one unmatched same-role Agent tool_use and one such child -> inferred link (session_dir_role_unique).', (t) => {
+  const cwd = dev('inferred-link');
+  const f = t.main(cwd, 'infer-session-001');
+  t.req(f, { input: 10, output: 5, cacheRead: 0, cwAgg: 0, tools: [{ name: 'Agent', role: 'code-reviewer' }] });
+  const c = t.child(cwd, 'infer-session-001', 'infer-01', { role: 'code-reviewer', toolUseId: null, inferred: true });
+  t.req(c, { input: 4, output: 4, cacheRead: 0, cwAgg: 0 });
+});
+
+define('nested-orphan-grandchild', 'Main spawns a child (exact); a grandchild (depth 2) in the same subagents dir has a meta toolUseId that no transcript contains -> unlinked, usage still counted.', (t) => {
+  const cwd = dev('nested-orphan-grandchild');
+  const f = t.main(cwd, 'orphgc-session-001');
+  const a = t.req(f, { input: 10, output: 20, cacheRead: 0, cwAgg: 0, tools: [{ name: 'Agent', role: 'code-reviewer' }] });
+  const c = t.child(cwd, 'orphgc-session-001', 'orphgc-child', { role: 'code-reviewer', toolUseId: a.toolIds[0] as string, depth: 1 });
+  t.req(c, { input: 5, output: 8, cacheRead: 0, cwAgg: 0 });
+  const g = t.child(cwd, 'orphgc-session-001', 'orphgc-grand', { role: 'test-runner', toolUseId: 'toolu_orphgc_missing_01', depth: 2 });
+  t.req(g, { input: 3, output: 2, cacheRead: 0, cwAgg: 0 });
+});
+
+define('split-exceeds-aggregate', 'cache_creation split (5m 100 + 1h 200 = 300) exceeds the aggregate (250): use the split values, no unsplit residual, never both.', (t) => {
+  const f = t.main(dev('split-exceeds-aggregate'), 'splitx-session-001');
+  t.req(f, { input: 10, output: 5, cacheRead: 0, cw5: 100, cw1: 200, cwAgg: 250 });
+});
+
+define('invalid-utf8', 'A text field contains invalid UTF-8 bytes (0xFF 0xFE 0xC3 0x28) inside otherwise valid JSON. The request is still counted (INVALID_UTF8 warning).', (t) => {
+  const f = t.main(dev('invalid-utf8'), 'utf8-session-001');
+  t.req(f, { input: 10, output: 5, cacheRead: 0, cwAgg: 0, text: `${t.canary()} before ${INVALID_UTF8_SENTINEL} after` });
+  t.req(f, { input: 7, output: 3, cacheRead: 0, cwAgg: 0 });
+});
+
+define('huge-line', 'One assistant line over 4 MiB of canary text: skipped as LINE_TOO_LONG, never buffered; its request is NOT counted, neighbours are.', (t) => {
+  const f = t.main(dev('huge-line'), 'huge-session-001');
+  t.req(f, { input: 10, output: 5, cacheRead: 0, cwAgg: 0 });
+  const c = `${t.canary()} `;
+  t.req(f, { input: 99, output: 99, cacheRead: 0, cwAgg: 0, text: c.repeat(Math.ceil((4 * 1024 * 1024 + 1024) / c.length)), count: false });
+  t.req(f, { input: 7, output: 3, cacheRead: 0, cwAgg: 0 });
 });
 
 export const scenarios: Record<string, Scenario> = registry;

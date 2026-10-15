@@ -15,5 +15,8 @@
   },
   "dependencies": {
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@orbit/test-fixtures": "*"
   }
 }
